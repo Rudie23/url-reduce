@@ -19,11 +19,22 @@ def relatorios(request, slug):
     # parâmetro que está sendo passado na função
     # Para criar uma url completa, e incluindo o esquema e o domínio. Ela recebe como parametro
     url_reduzida = request.build_absolute_uri(f'/{slug}')
+    redirecionamentos_por_data = list(
+        UrlRedirect.objects.filter(
+            slug=slug
+        ).annotate(
+            data=TruncDate('logs__created_at')
+        ).annotate(
+            cliques=Count('data')
+        ).order_by('data')
+    )
+    ctx = {
+        'reduce': url_redirect,
+        'url_reduzida': url_reduzida,
+        'redirecionamentos_por_data': redirecionamentos_por_data,
+        'total_cliques': sum(r.cliques for r in redirecionamentos_por_data)
+    }
 
-    ctx = {'reduce': url_redirect,
-           'url_reduzida': url_reduzida,
-
-           }
     return render(request, 'base/relatorio.html', ctx)
 
 
